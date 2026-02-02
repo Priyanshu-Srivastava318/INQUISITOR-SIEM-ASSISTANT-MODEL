@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment - INQUISITOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sora': ['Sora', 'sans-serif'],
+                        'dm': ['DM Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .sidebar-link {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-link:hover {
+            background: rgba(14, 165, 233, 0.1);
+            border-left: 3px solid #0EA5E9;
+            padding-left: 1.25rem;
+        }
+        
+        .sidebar-link.active {
+            background: rgba(14, 165, 233, 0.1);
+            border-left: 3px solid #0EA5E9;
+            padding-left: 1.25rem;
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#020617] font-dm text-white">
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#0F172A] border-r border-white/10 flex flex-col">
+            <div class="p-6 border-b border-white/10">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-[#0EA5E9]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                    </svg>
+                    <span class="text-xl font-sora font-bold gradient-text">INQUISITOR</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <a href="dashboard.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="font-semibold">Dashboard</span>
+                </a>
+
+                <a href="chat.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                    </svg>
+                    <span class="font-semibold">Chat Assistant</span>
+                </a>
+
+                <a href="threats.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span class="font-semibold">Threat Monitor</span>
+                </a>
+
+                <a href="complaints.html" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="font-semibold">Incidents</span>
+                </a>
+
+                <a href="predictions.html" class="sidebar-link active flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <span class="font-semibold">Risk Assessment</span>
+                </a>
+
+                <a href="#" class="sidebar-link flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="font-semibold">Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-[#0EA5E9] to-[#8B5CF6] rounded-full flex items-center justify-center font-bold" id="userAvatar">A</div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm" id="userName">Admin User</p>
+                        <p class="text-xs text-gray-400" id="userRole">Administrator</p>
+                    </div>
+                </div>
+                <button onclick="Auth.logout()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Header -->
+            <header class="bg-[#0F172A]/50 backdrop-blur-xl border-b border-white/10 sticky top-0 z-40">
+                <div class="px-8 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-sora font-bold">AI Risk Assessment</h1>
+                        <p class="text-sm text-gray-400">Predictive threat intelligence and risk analysis</p>
+                    </div>
+                    
+                    <button class="bg-gradient-to-r from-[#0EA5E9] to-[#8B5CF6] px-6 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-[#0EA5E9]/50 transition-all flex items-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Generate Report</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-8">
+                <!-- AI Analysis Status -->
+                <div class="bg-gradient-to-r from-[#0EA5E9]/10 to-[#8B5CF6]/10 border border-[#0EA5E9]/20 rounded-2xl p-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-[#0EA5E9]/20 rounded-xl flex items-center justify-center pulse-animation">
+                            <svg class="w-6 h-6 text-[#0EA5E9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-sora font-bold text-lg mb-1">AI Analysis Active</h3>
+                            <p class="text-sm text-gray-400">Machine learning models analyzing threat patterns in real-time</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-400">Last Updated</p>
+                            <p class="font-bold text-[#0EA5E9]">2 mins ago</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Score Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-sora font-bold">Overall Risk Score</h3>
+                            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-5xl font-sora font-bold text-orange-400">68<span class="text-2xl text-gray-400">/100</span></p>
+                            <p class="text-sm text-gray-400 mt-2">Medium Risk Level</p>
+                        </div>
+                        <div class="w-full bg-white/5 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full" style="width: 68%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-sora font-bold">Predicted Threats (24h)</h3>
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-5xl font-sora font-bold text-red-400">23</p>
+                            <p class="text-sm text-gray-400 mt-2">↑ 15% from yesterday</p>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            <p><span class="text-red-400 font-bold">8</span> Critical</p>
+                            <p><span class="text-orange-400 font-bold">15</span> High Priority</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-sora font-bold">Attack Probability</h3>
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="mb-4">
+                            <p class="text-5xl font-sora font-bold text-yellow-400">72<span class="text-2xl text-gray-400">%</span></p>
+                            <p class="text-sm text-gray-400 mt-2">Next 7 days</p>
+                        </div>
+                        <p class="text-xs text-yellow-400 bg-yellow-500/10 px-3 py-2 rounded-lg">
+                            ⚠️ High probability of DDoS attack
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Predictive Insights -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                        <h3 class="text-xl font-sora font-bold mb-6">Risk Trend Analysis</h3>
+                        <canvas id="riskTrendChart" height="250"></canvas>
+                    </div>
+
+                    <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                        <h3 class="text-xl font-sora font-bold mb-6">Threat Type Distribution</h3>
+                        <canvas id="threatTypeChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <!-- AI Predictions -->
+                <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-sora font-bold">AI-Powered Predictions</h3>
+                        <span class="bg-[#8B5CF6]/20 text-[#8B5CF6] px-3 py-1 rounded-full text-xs font-bold">Powered by ML</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Prediction 1 -->
+                        <div class="bg-red-500/5 border border-red-500/20 rounded-xl p-5">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <h4 class="font-sora font-bold">DDoS Attack Likely</h4>
+                                        <span class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-bold">Confidence: 87%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mb-3">
+                                        ML models predict a high probability of DDoS attack within next 48 hours based on unusual traffic patterns from Eastern Europe.
+                                    </p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-400">
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Expected: 24-48 hours</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Mitigation: Enable rate limiting</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prediction 2 -->
+                        <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-5">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <h4 class="font-sora font-bold">Credential Stuffing Campaign</h4>
+                                        <span class="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-xs font-bold">Confidence: 76%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mb-3">
+                                        Analysis shows increased failed login attempts matching patterns of credential stuffing. Source IPs linked to known bot networks.
+                                    </p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-400">
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Expected: Next 3-5 days</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Mitigation: Enable CAPTCHA & MFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prediction 3 -->
+                        <div class="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-5">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <h4 class="font-sora font-bold">Phishing Campaign Surge</h4>
+                                        <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-xs font-bold">Confidence: 64%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-400 mb-3">
+                                        Historical patterns suggest increased phishing activity during this period. Similar campaigns detected targeting your industry.
+                                    </p>
+                                    <div class="flex items-center space-x-4 text-xs text-gray-400">
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Expected: Next 7 days</span>
+                                        </div>
+                                        <div class="flex items-center space-x-1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <span>Mitigation: User awareness training</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vulnerability Assessment -->
+                <div class="bg-[#0F172A]/50 border border-white/10 rounded-2xl p-6">
+                    <h3 class="text-xl font-sora font-bold mb-6">Top Vulnerabilities</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-semibold">Outdated SSL Certificates</span>
+                                    <span class="text-red-400 text-sm font-bold">Critical</span>
+                                </div>
+                                <div class="w-full bg-white/5 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <span class="text-gray-400 text-sm">12 assets</span>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-semibold">Weak Password Policies</span>
+                                    <span class="text-orange-400 text-sm font-bold">High</span>
+                                </div>
+                                <div class="w-full bg-white/5 rounded-full h-2">
+                                    <div class="bg-orange-500 h-2 rounded-full" style="width: 67%"></div>
+                                </div>
+                            </div>
+                            <span class="text-gray-400 text-sm">8 users</span>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-2">
+                                    <span class="font-semibold">Unpatched Software</span>
+                                    <span class="text-yellow-400 text-sm font-bold">Medium</span>
+                                </div>
+                                <div class="w-full bg-white/5 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            <span class="text-gray-400 text-sm">23 systems</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="src/auth.js"></script>
+    <script src="src/riskAssessment.js"></script>
+    <script>
+        Auth.requireAuth();
+        const user = Auth.getCurrentUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userRole').textContent = user.role;
+            document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+        }
+
+        // Risk Trend Chart
+        const riskCtx = document.getElementById('riskTrendChart').getContext('2d');
+        new Chart(riskCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Risk Score',
+                    data: [45, 52, 58, 64, 68, 71, 68],
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#F59E0B'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Threat Type Chart
+        const threatCtx = document.getElementById('threatTypeChart').getContext('2d');
+        new Chart(threatCtx, {
+            type: 'bar',
+            data: {
+                labels: ['DDoS', 'Malware', 'Phishing', 'SQL Injection', 'XSS'],
+                datasets: [{
+                    label: 'Predicted Incidents',
+                    data: [8, 6, 4, 3, 2],
+                    backgroundColor: [
+                        '#EF4444',
+                        '#F59E0B',
+                        '#8B5CF6',
+                        '#0EA5E9',
+                        '#10B981'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#9CA3AF'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

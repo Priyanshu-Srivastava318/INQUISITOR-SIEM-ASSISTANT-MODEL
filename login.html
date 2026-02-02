@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - INQUISITOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sora': ['Sora', 'sans-serif'],
+                        'dm': ['DM Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .floating-particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            50% {
+                transform: translateY(-100px) translateX(50px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#020617] font-dm min-h-screen py-12 px-4 overflow-y-auto">
+    
+    <!-- Animated Background -->
+    <div class="floating-particles">
+        <div class="particle" style="width: 100px; height: 100px; left: 10%; top: 20%; animation-delay: 0s;"></div>
+        <div class="particle" style="width: 150px; height: 150px; right: 10%; top: 40%; animation-delay: 2s;"></div>
+        <div class="particle" style="width: 80px; height: 80px; left: 50%; bottom: 20%; animation-delay: 4s;"></div>
+    </div>
+
+    <div class="w-full max-w-md mx-auto relative z-10">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <a href="index.html" class="flex items-center justify-center space-x-3 mb-4 hover:opacity-80 transition-opacity">
+                <svg class="w-10 h-10 text-[#0EA5E9]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                </svg>
+                <span class="text-3xl font-sora font-bold gradient-text">INQUISITOR</span>
+            </a>
+            <p class="text-gray-400 text-sm">AI-Powered SIEM Assistant</p>
+        </div>
+
+        <!-- Backend Status -->
+        <div id="backendStatus" class="hidden mb-4 p-3 rounded-lg text-sm text-center">
+            <span id="statusText"></span>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-[#0F172A]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-sora font-bold text-white mb-2">Welcome Back</h2>
+            <p class="text-gray-400 mb-8">Sign in to access your security dashboard</p>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+                <span id="errorText"></span>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email"
+                        required
+                        placeholder="you@company.com"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        id="password"
+                        required
+                        placeholder="••••••••"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:border-transparent transition-all"
+                    >
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" class="w-4 h-4 rounded border-white/20 bg-white/5 text-[#0EA5E9] focus:ring-[#0EA5E9]">
+                        <span class="text-sm text-gray-400">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm text-[#0EA5E9] hover:text-[#0284C7] transition-colors">Forgot password?</a>
+                </div>
+
+                <button 
+                    type="submit"
+                    id="loginBtn"
+                    class="w-full bg-gradient-to-r from-[#0EA5E9] to-[#8B5CF6] text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-[#0EA5E9]/50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Demo Credentials Info (Collapsible) -->
+            <div class="mt-6 border-t border-white/10 pt-6">
+                <button 
+                    id="demoToggle"
+                    class="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center space-x-2 mx-auto"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Testing? Click for demo credentials</span>
+                </button>
+                
+                <div id="demoCredentials" class="hidden mt-4 bg-white/5 border border-white/10 rounded-lg p-4 text-sm">
+                    <p class="text-gray-400 mb-3 font-semibold">Demo Account (For Testing Only):</p>
+                    <div class="space-y-2 text-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[#0EA5E9]">Admin:</span>
+                            <span class="font-mono text-xs">admin@inquisitor.ai / admin123</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">
+                        💡 Or <a href="signup.html" class="text-[#0EA5E9] hover:underline">create your own account</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sign Up Link -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-400">
+                    Don't have an account? 
+                    <a href="signup.html" class="text-[#0EA5E9] hover:text-[#0284C7] font-semibold transition-colors">Create one</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6 mb-8">
+            <a href="index.html" class="text-sm text-gray-400 hover:text-[#0EA5E9] transition-colors flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                <span>Back to Home</span>
+            </a>
+        </div>
+    </div>
+
+    <script src="src/auth.js"></script>
+    <script src="src/apiService.js"></script>
+    <script>
+        let useBackend = false;
+        const statusDiv = document.getElementById('backendStatus');
+        const statusText = document.getElementById('statusText');
+
+        // Check backend availability
+        async function checkBackend() {
+            try {
+                const isHealthy = await APIService.checkBackendHealth();
+                if (isHealthy) {
+                    useBackend = true;
+                    statusDiv.className = 'mb-4 p-3 rounded-lg text-sm text-center bg-green-500/10 border border-green-500/20 text-green-400';
+                    statusText.textContent = '✅ Backend Connected - Real Authentication Active';
+                    statusDiv.classList.remove('hidden');
+                    console.log('✅ Backend connected');
+                } else {
+                    showDemoMode();
+                }
+            } catch (error) {
+                showDemoMode();
+            }
+        }
+
+        function showDemoMode() {
+            statusDiv.className = 'mb-4 p-3 rounded-lg text-sm text-center bg-yellow-500/10 border border-yellow-500/20 text-yellow-400';
+            statusText.textContent = '⚠️ Demo Mode - Using LocalStorage (Start backend for real auth)';
+            statusDiv.classList.remove('hidden');
+            console.log('⚠️ Backend not available - Using demo mode');
+        }
+
+        checkBackend();
+
+        // Toggle demo credentials
+        document.getElementById('demoToggle').addEventListener('click', function() {
+            const demoDiv = document.getElementById('demoCredentials');
+            demoDiv.classList.toggle('hidden');
+        });
+
+        // Login Form Handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Hide previous errors
+            errorDiv.classList.add('hidden');
+            
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            
+            let result;
+            
+            try {
+                // Try backend first if available
+                if (useBackend) {
+                    result = await APIService.login(email, password);
+                } else {
+                    // Fallback to localStorage
+                    result = Auth.login(email, password);
+                }
+                
+                if (result.success) {
+                    // Success - redirect to dashboard
+                    loginBtn.textContent = 'Success! Redirecting...';
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500);
+                } else {
+                    // Show error
+                    errorText.textContent = result.error || result.message || 'Invalid credentials';
+                    errorDiv.classList.remove('hidden');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorText.textContent = 'An error occurred. Please try again.';
+                errorDiv.classList.remove('hidden');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>
