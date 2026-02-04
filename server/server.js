@@ -1,152 +1,79 @@
-    const express = require('express');
-    const cors = require('cors');
-    const helmet = require('helmet');
-    const morgan = require('morgan');
-    const compression = require('compression');
-    const rateLimit = require('express-rate-limit');
-    const path = require('path');
-    require('dotenv').config();
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const morgan = require('morgan');
+const connectDB = require('./config/db');
+const connectElasticsearch = require('./config/elasticsearch');
 
-    // ===== FIXED PATHS =====
-    const { sequelize, testConnection } = require(path.join(__dirname, 'config', 'database'));
-    const elasticsearchService = require(path.join(__dirname, 'services', 'elasticsearch'));
+// Load env vars
+dotenv.config();
 
-    // ===== ROUTES =====
-    const authRoutes = require(path.join(__dirname, 'routes', 'auth'));
-    const threatRoutes = require(path.join(__dirname, 'routes', 'threats'));
-    const chatRoutes = require(path.join(__dirname, 'routes', 'chat'));
+// Connect to database
+connectDB();
 
-    // ===== APP INIT =====
-    const app = express();
+// Connect to Elasticsearch
+connectElasticsearch();
 
-    // ===== SECURITY =====
-    app.use(helmet());
-    app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:5501', 'http://127.0.0.1:5501'],
+const app = express();
+
+// CORS Configuration - YE FIX KIYA HAI
+app.use(cors({
+  origin: [
+    'https://inquisitor-siem.netlify.app',  // Tera production frontend
+    'http://localhost:3000',                 // Local testing ke liye
+    'http://localhost:5173'                  // Vite ke liye agar use karta hai
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-    // ===== RATE LIMIT =====
-    const limiter = rateLimit({
-      windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
-      max: process.env.RATE_LIMIT_MAX_REQUESTS || 100,
-      message: 'Too many requests from this IP'
-    });
-    app.use('/api/', limiter);
+// Body parser
+app.use(express.json());
 
-    // ===== BODY PARSER =====
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+// Dev logging middleware
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
-    // ===== COMPRESSION =====
-    app.use(compression());
+// Mount routers
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/logs', require('./routes/logRoutes'));
+app.use('/api/alerts', require('./routes/alertRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
-    // ===== LOGGING =====
-    if (process.env.NODE_ENV === 'development') {
-      app.use(morgan('dev'));
-    }
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'INQUISITOR Backend running',
+    timestamp: new Date().toISOString()
+  });
+});
 
-    // ===== HEALTH CHECK =====
-    app.get('/health', (req, res) => {
-      res.json({
-        success: true,
-        message: 'INQUISITOR Backend is running',
-        timestamp: new Date().toISOString()
-      });
-    });
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'INQUISITOR SIEM API' });
+});
 
-    // ===== API ROUTES =====
-    app.use('/api/auth', authRoutes);
-    app.use('/api/threats', threatRoutes);
-    app.use('/api/chat', chatRoutes);
+const PORT = process.env.PORT || 5000;
 
-    // ===== 404 HANDLER =====
-    app.use((req, res) => {
-      res.status(404).json({
-        success: false,
-        message: 'Route not found'
-      });
-    });
+const server = app.listen(
+  PORT,
+  console.log(`
+╔════════════════════════════════════════════════╗
+║                                                ║
+║     🚀 INQUISITOR Backend running on port ${PORT}    ║
+║                                                ║
+║     📍 Health check: http://localhost:${PORT}/health   ║
+║                                                ║
+╚════════════════════════════════════════════════╝
+  `)
+);
 
-    // ===== ERROR HANDLER =====
-    app.use((err, req, res, next) => {
-      console.error('Error:', err);
-      res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-      });
-    });
-
-    // ===== SERVER START =====
-    const PORT = process.env.PORT || 5000;
-
-    const startServer = async () => {
-      try {
-        // DB connect
-        await testConnection();
-
-        // Sync models
-        await sequelize.sync({ alter: false });
-        console.log('✅ Database models synced'); 
-
-        // Default admin
-        await createDefaultAdmin();
-
-        // Elasticsearch
-        const esConnected = await elasticsearchService.testConnection();
-        if (!esConnected) {
-          console.warn('⚠️ Elasticsearch not connected - fallback enabled');
-        }
-
-        // Listen
-        app.listen(PORT, () => {
-          console.log(`🚀 INQUISITOR Backend running on port ${PORT}`);
-          console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-        });
-
-      } catch (error) {
-        console.error('❌ Failed to start server:', error);
-        process.exit(1);
-      }
-    };
-
-    // ===== DEFAULT ADMIN =====
-    async function createDefaultAdmin() {
-      const User = require(path.join(__dirname, 'models', 'User'));
-
-      try {
-        const adminExists = await User.findOne({
-          where: { email: 'admin@inquisitor.ai' }
-        });
-
-        if (!adminExists) {
-          await User.create({
-            name: 'Admin User',
-            email: 'admin@inquisitor.ai',
-            password: 'admin123',
-            role: 'Administrator'
-          });
-          console.log('✅ Default admin user created');
-        }
-      } catch (error) {
-        console.error('Error creating default admin:', error);
-      }
-    }
-
-    // ===== GRACEFUL SHUTDOWN =====
-    process.on('SIGINT', async () => {
-      console.log('\n🛑 Shutting down gracefully...');
-      await sequelize.close();
-      await elasticsearchService.close();
-      console.log('✅ Connections closed');
-      process.exit(0);
-    });
-
-    // ===== START =====
-    startServer();
-
-    module.exports = app;
-      
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err, promise) => {
+  console.log(`Error: ${err.message}`);
+  // Close server & exit process
+  server.close(() => process.exit(1));
+});
