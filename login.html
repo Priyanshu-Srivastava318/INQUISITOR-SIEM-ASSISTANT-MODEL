@@ -143,6 +143,8 @@
         </div>
     </div>
 
+    <script src="src/apiService.js"></script>
+    <script src="src/auth.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -158,30 +160,23 @@
             loginBtn.textContent = 'Signing in...';
             
             try {
-                const response = await fetch('http://localhost:5000/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                // Use APIService (environment-aware)
+                const result = await Auth.login(email, password);
 
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('jwt_token', data.token);
-                    localStorage.setItem('inquisitor_user', JSON.stringify(data.user));
+                if (result.success) {
                     loginBtn.textContent = 'Success! Redirecting...';
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
                 } else {
-                    errorText.textContent = data.message || 'Invalid credentials';
+                    errorText.textContent = result.message || result.error || 'Invalid credentials';
                     errorDiv.classList.remove('hidden');
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Sign In';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                errorText.textContent = 'Connection error. Make sure backend is running on port 5000.';
+                errorText.textContent = 'Connection error. Please try again.';
                 errorDiv.classList.remove('hidden');
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';

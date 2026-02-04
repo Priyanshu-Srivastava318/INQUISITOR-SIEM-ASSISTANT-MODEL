@@ -1,9 +1,18 @@
-// API Service - Connect Frontend to Backend
-const API_URL = 'http://localhost:5000/api';
+// API Service - Environment-aware Backend Connection
+// Automatically detects local vs deployed environment
+
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'  // Local development
+    : 'https://inquisitor-siem-assistant-model.onrender.com/api';  // Production
+
+const HEALTH_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/health'
+    : 'https://inquisitor-siem-assistant-model.onrender.com/health';
 
 class APIService {
     constructor() {
         this.token = localStorage.getItem('jwt_token');
+        console.log('🔗 API URL:', API_URL);  // Debug log
     }
 
     // Get headers with authentication
@@ -177,7 +186,7 @@ class APIService {
     // Check if backend is reachable
     async checkBackendHealth() {
         try {
-            const response = await fetch('http://localhost:5000/health');
+            const response = await fetch(HEALTH_URL);
             const data = await response.json();
             return data.success;
         } catch (error) {

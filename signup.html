@@ -163,6 +163,8 @@
         </div>
     </div>
 
+    <script src="src/apiService.js"></script>
+    <script src="src/auth.js"></script>
     <script>
         const form = document.getElementById('signupForm');
         const messageDiv = document.getElementById('message');
@@ -201,27 +203,22 @@
             signupBtn.textContent = 'Creating Account...';
             
             try {
-                const response = await fetch('http://localhost:5000/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
-                });
-
-                const data = await response.json();
+                // Use Auth.signup (environment-aware)
+                const result = await Auth.signup(name, email, password);
                 
-                if (data.success) {
+                if (result.success) {
                     showMessage('Account created successfully! Redirecting...');
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 1500);
                 } else {
-                    showMessage(data.message || 'Registration failed', true);
+                    showMessage(result.message || result.error || 'Registration failed', true);
                     signupBtn.disabled = false;
                     signupBtn.textContent = 'Create Account';
                 }
             } catch (error) {
                 console.error('Signup error:', error);
-                showMessage('Connection error. Make sure backend is running on port 5000.', true);
+                showMessage('Connection error. Please try again.', true);
                 signupBtn.disabled = false;
                 signupBtn.textContent = 'Create Account';
             }
