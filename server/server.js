@@ -29,17 +29,34 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS Configuration
-app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'https://inquisitor-siem.netlify.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ],
+// CORS Configuration - ENHANCED
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://inquisitor-siem.netlify.app',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight
 
 // Body parser
 app.use(express.json());
