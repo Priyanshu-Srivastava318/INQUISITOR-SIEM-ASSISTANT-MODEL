@@ -2,12 +2,25 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const morgan = require('morgan');
-const mongoose = require('mongoose');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 // Load env vars
 dotenv.config();
 
 const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
 
 // CORS Configuration
 app.use(cors({
@@ -23,38 +36,54 @@ app.use(cors({
 
 // Body parser
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Dev logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Connect to MongoDB
+// Database connection (Sequelize)
+const { sequelize } = require('./config/database');
+
+// Test database connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.DATABASE_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await sequelize.authenticate();
     console.log('✅ Database connection established successfully');
-    console.log(`📍 MongoDB Connected: ${conn.connection.host}`);
+    
+    // Sync models (don't use force: true in production!)
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ alter: false });
+      console.log('📊 Database models synced');
+    }
   } catch (error) {
-    console.log(`❌ Error: ${error.message}`);
+    console.log('❌ Database connection error:', error.message);
     process.exit(1);
   }
 };
 
-// Connect to Elasticsearch (Optional)
+connectDB();
+
+// Elasticsearch connection (optional)
 const connectElasticsearch = async () => {
   try {
-    console.log('⚠️  Elasticsearch not connected - fallback enabled');
+    if (process.env.ELASTICSEARCH_NODE) {
+      const { Client } = require('@elastic/elasticsearch');
+      const esClient = new Client({
+        node: process.env.ELASTICSEARCH_NODE
+      });
+      
+      const health = await esClient.cluster.health();
+      console.log('✅ Elasticsearch connected:', health.status);
+    } else {
+      console.log('⚠️  Elasticsearch not configured - fallback enabled');
+    }
   } catch (error) {
     console.log('⚠️  Elasticsearch connection failed - fallback enabled');
   }
 };
 
-// Initialize connections
-connectDB();
 connectElasticsearch();
 
 // Mount routers
@@ -64,17 +93,27 @@ try {
   app.use('/api/alerts', require('./routes/alertRoutes'));
   app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 } catch (error) {
-  console.log('⚠️  Some routes not found, using available routes only');
+  console.log('⚠️  Some routes not found:', error.message);
 }
 
 // Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'INQUISITOR Backend running',
-    timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.status(200).json({ 
+      status: 'OK', 
+      message: 'INQUISITOR Backend running',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      version: '1.0.0'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: 'Database connection failed',
+      error: error.message
+    });
+  }
 });
 
 // Root route
@@ -82,7 +121,25 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'INQUISITOR SIEM API',
     version: '1.0.0',
-    status: 'running'
+    status: 'running',
+    database: 'PostgreSQL + Sequelize'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    status: 'error',
+    message: 'Route not found' 
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    status: 'error',
+    message: err.message || 'Internal server error'
   });
 });
 
@@ -91,10 +148,20 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 INQUISITOR Backend running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`❌ Error: ${err.message}`);
   server.close(() => process.exit(1));
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received, closing server gracefully');
+  server.close(() => {
+    sequelize.close();
+    console.log('💤 Process terminated');
+  });
 });
