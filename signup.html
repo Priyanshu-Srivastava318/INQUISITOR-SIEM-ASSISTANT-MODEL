@@ -136,6 +136,7 @@
 
                 <button 
                     type="submit"
+                    id="signupBtn"
                     class="w-full bg-gradient-to-r from-[#0EA5E9] to-[#8B5CF6] text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-[#0EA5E9]/50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     Create Account
@@ -162,24 +163,10 @@
         </div>
     </div>
 
-    <script src="src/auth.js"></script>
-    <script src="src/apiService.js"></script>
     <script>
         const form = document.getElementById('signupForm');
         const messageDiv = document.getElementById('message');
-        let useBackend = false;
-
-        // Check backend
-        async function checkBackend() {
-            try {
-                useBackend = await APIService.checkBackendHealth();
-                console.log(useBackend ? '✅ Backend connected' : '⚠️ Demo mode');
-            } catch (error) {
-                console.log('⚠️ Demo mode');
-            }
-        }
-
-        checkBackend();
+        const signupBtn = document.getElementById('signupBtn');
 
         function showMessage(text, isError = false) {
             messageDiv.className = isError 
@@ -197,7 +184,6 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
-            // Hide previous messages
             messageDiv.classList.add('hidden');
             
             // Validation
@@ -211,28 +197,33 @@
                 return;
             }
             
-            let result;
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating Account...';
             
             try {
-                // Try backend first
-                if (useBackend) {
-                    result = await APIService.register(name, email, password);
-                } else {
-                    // Fallback to localStorage
-                    result = Auth.signup(name, email, password);
-                }
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
                 
-                if (result.success) {
+                if (data.success) {
                     showMessage('Account created successfully! Redirecting...');
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 1500);
                 } else {
-                    showMessage(result.error || result.message || 'Registration failed', true);
+                    showMessage(data.message || 'Registration failed', true);
+                    signupBtn.disabled = false;
+                    signupBtn.textContent = 'Create Account';
                 }
             } catch (error) {
                 console.error('Signup error:', error);
-                showMessage('Network error. Please try again.', true);
+                showMessage('Connection error. Make sure backend is running on port 5000.', true);
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Create Account';
             }
         });
     </script>

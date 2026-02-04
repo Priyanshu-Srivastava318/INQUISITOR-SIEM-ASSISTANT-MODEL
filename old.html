@@ -72,6 +72,11 @@
             <p class="text-gray-400 text-sm">AI-Powered SIEM Assistant</p>
         </div>
 
+        <!-- Backend Status -->
+        <div id="backendStatus" class="hidden mb-4 p-3 rounded-lg text-sm text-center">
+            <span id="statusText"></span>
+        </div>
+
         <!-- Login Card -->
         <div class="bg-[#0F172A]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
             <h2 class="text-2xl font-sora font-bold text-white mb-2">Welcome Back</h2>
@@ -123,6 +128,32 @@
                 </button>
             </form>
 
+            <!-- Demo Credentials Info (Collapsible) -->
+            <div class="mt-6 border-t border-white/10 pt-6">
+                <button 
+                    id="demoToggle"
+                    class="text-sm text-gray-400 hover:text-gray-300 transition-colors flex items-center space-x-2 mx-auto"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Testing? Click for demo credentials</span>
+                </button>
+                
+                <div id="demoCredentials" class="hidden mt-4 bg-white/5 border border-white/10 rounded-lg p-4 text-sm">
+                    <p class="text-gray-400 mb-3 font-semibold">Demo Account (For Testing Only):</p>
+                    <div class="space-y-2 text-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[#0EA5E9]">Admin:</span>
+                            <span class="font-mono text-xs">admin@inquisitor.ai / admin123</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">
+                        💡 Or <a href="signup.html" class="text-[#0EA5E9] hover:underline">create your own account</a>
+                    </p>
+                </div>
+            </div>
+
             <!-- Sign Up Link -->
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-400">
@@ -143,7 +174,47 @@
         </div>
     </div>
 
+      <script src="src/apiService.js"></script>
+         <script src="src/auth.js"></script>
     <script>
+        let useBackend = false;
+        const statusDiv = document.getElementById('backendStatus');
+        const statusText = document.getElementById('statusText');
+
+        // Check backend availability
+        async function checkBackend() {
+            try {
+                const isHealthy = await APIService.checkBackendHealth();
+                if (isHealthy) {
+                    useBackend = true;
+                    statusDiv.className = 'mb-4 p-3 rounded-lg text-sm text-center bg-green-500/10 border border-green-500/20 text-green-400';
+                    statusText.textContent = '✅ Backend Connected - Real Authentication Active';
+                    statusDiv.classList.remove('hidden');
+                    console.log('✅ Backend connected');
+                } else {
+                    showDemoMode();
+                }
+            } catch (error) {
+                showDemoMode();
+            }
+        }
+
+        function showDemoMode() {
+            statusDiv.className = 'mb-4 p-3 rounded-lg text-sm text-center bg-yellow-500/10 border border-yellow-500/20 text-yellow-400';
+            statusText.textContent = '⚠️ Demo Mode - Using LocalStorage (Start backend for real auth)';
+            statusDiv.classList.remove('hidden');
+            console.log('⚠️ Backend not available - Using demo mode');
+        }
+
+        checkBackend();
+
+        // Toggle demo credentials
+        document.getElementById('demoToggle').addEventListener('click', function() {
+            const demoDiv = document.getElementById('demoCredentials');
+            demoDiv.classList.toggle('hidden');
+        });
+
+        // Login Form Handler
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -153,35 +224,40 @@
             const errorText = document.getElementById('errorText');
             const loginBtn = document.getElementById('loginBtn');
             
+            // Hide previous errors
             errorDiv.classList.add('hidden');
+            
+            // Disable button and show loading
             loginBtn.disabled = true;
             loginBtn.textContent = 'Signing in...';
             
+            let result;
+            
             try {
-                const response = await fetch('http://localhost:5000/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('jwt_token', data.token);
-                    localStorage.setItem('inquisitor_user', JSON.stringify(data.user));
+                // Try backend first if available
+                if (useBackend) {
+                    result = await APIService.login(email, password);
+                } else {
+                    // Fallback to localStorage
+                    result = Auth.login(email, password);
+                }
+                
+                if (result.success) {
+                    // Success - redirect to dashboard
                     loginBtn.textContent = 'Success! Redirecting...';
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
                 } else {
-                    errorText.textContent = data.message || 'Invalid credentials';
+                    // Show error
+                    errorText.textContent = result.error || result.message || 'Invalid credentials';
                     errorDiv.classList.remove('hidden');
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Sign In';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                errorText.textContent = 'Connection error. Make sure backend is running on port 5000.';
+                errorText.textContent = 'An error occurred. Please try again.';
                 errorDiv.classList.remove('hidden');
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';
