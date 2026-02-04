@@ -105,10 +105,10 @@ const loadRoute = (routePath, mountPath) => {
   }
 };
 
-// Load your actual route files
-loadRoute('./routes/auth', '/api/auth');
-loadRoute('./routes/chat', '/api/chat');
-loadRoute('./routes/threats', '/api/threats');
+// Load your actual route files - WITH .js EXTENSION
+loadRoute('./routes/auth.js', '/api/auth');
+loadRoute('./routes/chat.js', '/api/chat');
+loadRoute('./routes/threats.js', '/api/threats');
 
 // Health check route
 app.get('/health', async (req, res) => {
