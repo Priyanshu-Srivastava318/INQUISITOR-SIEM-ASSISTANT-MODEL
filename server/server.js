@@ -5,11 +5,16 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const fs = require('fs');
+const path = require('path');
 
 // Load env vars
 dotenv.config();
 
 const app = express();
+
+// Trust proxy - IMPORTANT for Render/Heroku
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
@@ -17,8 +22,10 @@ app.use(compression());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -44,22 +51,19 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Database connection (Sequelize)
-const { sequelize } = require('./config/database');
+const { sequelize, testConnection } = require('./config/database');
 
 // Test database connection
 const connectDB = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Database connection established successfully');
-    
-    // Sync models (don't use force: true in production!)
-    if (process.env.NODE_ENV === 'development') {
+  const isConnected = await testConnection();
+  
+  if (isConnected && process.env.NODE_ENV === 'development') {
+    try {
       await sequelize.sync({ alter: false });
       console.log('📊 Database models synced');
+    } catch (error) {
+      console.log('⚠️  Model sync skipped:', error.message);
     }
-  } catch (error) {
-    console.log('❌ Database connection error:', error.message);
-    process.exit(1);
   }
 };
 
@@ -86,15 +90,25 @@ const connectElasticsearch = async () => {
 
 connectElasticsearch();
 
-// Mount routers
-try {
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/logs', require('./routes/logRoutes'));
-  app.use('/api/alerts', require('./routes/alertRoutes'));
-  app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-} catch (error) {
-  console.log('⚠️  Some routes not found:', error.message);
-}
+// Mount routers - CORRECT FILE NAMES
+const loadRoute = (routePath, mountPath) => {
+  try {
+    const fullPath = path.join(__dirname, routePath);
+    if (fs.existsSync(fullPath)) {
+      app.use(mountPath, require(routePath));
+      console.log(`✅ Loaded route: ${mountPath}`);
+    } else {
+      console.log(`⚠️  Route not found: ${routePath}`);
+    }
+  } catch (error) {
+    console.log(`⚠️  Could not load route ${mountPath}:`, error.message);
+  }
+};
+
+// Load your actual route files
+loadRoute('./routes/auth', '/api/auth');
+loadRoute('./routes/chat', '/api/chat');
+loadRoute('./routes/threats', '/api/threats');
 
 // Health check route
 app.get('/health', async (req, res) => {
@@ -122,7 +136,13 @@ app.get('/', (req, res) => {
     message: 'INQUISITOR SIEM API',
     version: '1.0.0',
     status: 'running',
-    database: 'PostgreSQL + Sequelize'
+    database: 'PostgreSQL + Sequelize',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      chat: '/api/chat',
+      threats: '/api/threats'
+    }
   });
 });
 
@@ -130,7 +150,8 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ 
     status: 'error',
-    message: 'Route not found' 
+    message: 'Route not found',
+    path: req.path
   });
 });
 
