@@ -143,9 +143,14 @@
         </div>
     </div>
 
-    <script src="src/apiService.js"></script>
-    <script src="src/auth.js"></script>
     <script>
+        // Auto-detect environment
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://inquisitor-siem-assistant-model.onrender.com';
+
+        console.log('🔗 Using API:', API_URL);
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -160,23 +165,30 @@
             loginBtn.textContent = 'Signing in...';
             
             try {
-                // Use APIService (environment-aware)
-                const result = await Auth.login(email, password);
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-                if (result.success) {
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('jwt_token', data.token);
+                    localStorage.setItem('inquisitor_user', JSON.stringify(data.user));
                     loginBtn.textContent = 'Success! Redirecting...';
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
                 } else {
-                    errorText.textContent = result.message || result.error || 'Invalid credentials';
+                    errorText.textContent = data.message || 'Invalid credentials';
                     errorDiv.classList.remove('hidden');
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Sign In';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                errorText.textContent = 'Connection error. Please try again.';
+                errorText.textContent = 'Connection error. Make sure backend is running.';
                 errorDiv.classList.remove('hidden');
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';

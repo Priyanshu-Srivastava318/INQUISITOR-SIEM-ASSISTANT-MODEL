@@ -34,16 +34,22 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'https://inquisitor-siem.netlify.app',
+      'https://inquisitor-siem-assistant-model.vercel.app',
       'http://localhost:3000',
-      'http://localhost:5173'
+      'http://localhost:5173',
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'http://localhost:5501',
+      'http://127.0.0.1:5501'
     ];
     
     // Allow requests with no origin (like mobile apps or Postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log('❌ CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },

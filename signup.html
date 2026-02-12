@@ -163,9 +163,14 @@
         </div>
     </div>
 
-    <script src="src/apiService.js"></script>
-    <script src="src/auth.js"></script>
     <script>
+        // Auto-detect environment
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://inquisitor-siem-assistant-model.onrender.com';
+
+        console.log('🔗 Using API:', API_URL);
+
         const form = document.getElementById('signupForm');
         const messageDiv = document.getElementById('message');
         const signupBtn = document.getElementById('signupBtn');
@@ -203,22 +208,27 @@
             signupBtn.textContent = 'Creating Account...';
             
             try {
-                // Use Auth.signup (environment-aware)
-                const result = await Auth.signup(name, email, password);
+                const response = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
                 
-                if (result.success) {
+                if (data.success) {
                     showMessage('Account created successfully! Redirecting...');
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 1500);
                 } else {
-                    showMessage(result.message || result.error || 'Registration failed', true);
+                    showMessage(data.message || 'Registration failed', true);
                     signupBtn.disabled = false;
                     signupBtn.textContent = 'Create Account';
                 }
             } catch (error) {
                 console.error('Signup error:', error);
-                showMessage('Connection error. Please try again.', true);
+                showMessage('Connection error. Make sure backend is running.', true);
                 signupBtn.disabled = false;
                 signupBtn.textContent = 'Create Account';
             }
